@@ -1,0 +1,81 @@
+[package]
+name = "dig-service"
+version = "0.1.0"
+edition = "2021"
+description = "Generic Service<N, A, R> orchestration scaffold shared by every DIG Network binary. Lifecycle hooks, TaskRegistry, ShutdownToken — and nothing else."
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/DIG-Network/dig-service"
+homepage = "https://github.com/DIG-Network/dig-service"
+documentation = "https://docs.rs/dig-service"
+readme = "README.md"
+keywords = ["dig-network", "service", "tokio", "orchestration", "lifecycle"]
+categories = ["asynchronous", "cryptography::cryptocurrencies"]
+include = [
+    "src/**/*.rs",
+    "tests/**/*.rs",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE*",
+]
+
+[dependencies]
+# Runtime
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "time", "macros"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+
+# Trait-object dyn-compat for async methods — used by NodeLifecycle, PeerApi, RpcApi.
+# `async_trait` introduces a boxed future per method call. Fine for lifecycle
+# (called once); hot-path dispatch methods in PeerApi / RpcApi tolerate it in
+# v0.1 and can migrate to `async fn` in traits when MSRV hits 1.75+.
+async-trait = "0.1"
+
+# Facade only — binaries install their own subscriber.
+tracing = "0.1"
+
+# Error types.
+thiserror = "1"
+anyhow = "1"
+
+# Shared wire types — we re-export the RpcError types so RpcApi::dispatch
+# returns the same error variants every client already knows.
+dig-rpc-types = { version = "0.1", path = "../dig-rpc-types" }
+
+# JSON payload for the generic RpcApi::dispatch signature.
+serde_json = "1"
+
+# Async primitives.
+futures = "0.3"
+parking_lot = "0.12"
+
+[dev-dependencies]
+# Property tests for shutdown-ordering invariants.
+proptest = "1"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "time", "macros", "test-util"] }
+
+[features]
+default = []
+
+# Expose `TestService` + helpers for dependent crates' tests.
+testing = []
+
+# Wire `console_subscriber` for `tokio-console` introspection during
+# development. Not on by default to avoid pulling the dep into production
+# binaries.
+tokio-console = []
+
+# Install a panic hook that routes panics through tracing::error! and
+# triggers Fatal shutdown.
+structured-panic = []
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[[test]]
+name = "lifecycle"
+path = "tests/lifecycle.rs"
+
+[[test]]
+name = "shutdown"
+path = "tests/shutdown.rs"

@@ -1,0 +1,8 @@
+/target/
+**/*.rs.bk
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
